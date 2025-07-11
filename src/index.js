@@ -4,13 +4,23 @@ require('dotenv').config();
 
 const app = express();
 
-// --- CONFIGURACIÓN DE CORS ---
-// Es importante que esta configuración vaya ANTES de las rutas.
-// Esto le dice al servidor que acepte peticiones específicamente
-// desde el origen de tu aplicación de React en Vite.
+// --- CONFIGURACIÓN DE CORS PARA PRODUCCIÓN ---
+// Esta lista de orígenes permitidos es la clave.
+const allowedOrigins = [
+  'http://localhost:5173', // Tu frontend en desarrollo
+  process.env.FRONTEND_URL  // La URL de tu frontend en Vercel (que leerá desde las variables de entorno)
+];
+
 const corsOptions = {
-  origin: 'http://localhost:5173', // El puerto donde corre tu app de Vite/React
-  optionsSuccessStatus: 200
+  origin: function (origin, callback) {
+    // Permite peticiones sin 'origin' (como las de Postman o apps móviles)
+    // y las que están en nuestra lista de permitidos.
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
 };
 
 app.use(cors(corsOptions));
@@ -28,7 +38,8 @@ const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
 
 // --- INICIO DEL SERVIDOR ---
-const PORT = process.env.PORT || 5000;
+// CAMBIO: Se actualiza el puerto por defecto a 3306.
+const PORT = process.env.PORT || 3306;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
